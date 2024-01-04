@@ -11,3 +11,4 @@ class NewsApplication : Application(){
             Timber.plant(Timber.DebugTree())
     }
 }
+// тильтасьен
