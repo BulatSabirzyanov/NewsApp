@@ -1,6 +1,5 @@
 package com.example.source_content.domain.pagination
 
-import android.util.Log
 import com.example.common.pagination.BasePagingSource
 import com.example.model.dto.article.ArticleDto
 import com.example.model.dto.mapper.toArticleDtoList
