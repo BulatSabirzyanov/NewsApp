@@ -1,0 +1,108 @@
+package com.example.feed.ui.view
+
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
+import androidx.paging.LoadState
+import androidx.paging.compose.collectAsLazyPagingItems
+import com.example.common.mvvm.SharedViewModel
+import com.example.common.widget.GoUp
+import com.example.common.widget.ShimmerItem
+import com.example.feed.R
+import com.example.feed.ui.FeedEvent
+import com.example.feed.ui.FeedViewModel
+import com.example.feed.ui.FeedViewState
+import com.example.common.widget.ArticleRow
+import com.example.feed.ui.view.everythingComponent.Categories
+import com.example.feed.ui.view.sourcesComponent.SourcesItems
+import com.example.feed.ui.view.topHeadlinesComponent.TopHeadlinesItems
+import kotlinx.coroutines.launch
+
+@Composable
+fun FeedContent(
+    viewState: FeedViewState,
+    feedViewModel: FeedViewModel,
+    sharedViewModel: SharedViewModel
+) {
+    val scrollState = rememberLazyListState()
+    val scope = rememberCoroutineScope()
+    val showButton = remember {
+        derivedStateOf {
+            scrollState.firstVisibleItemIndex > 0
+        }
+    }
+    Box(Modifier.fillMaxSize()) {
+        val articles = viewState.articles.collectAsLazyPagingItems()
+
+
+
+        LazyColumn(state = scrollState, contentPadding = PaddingValues(bottom = 90.dp)) {
+            item {
+                CategoryTitle(
+                    stringResource(id = R.string.top_headlines),
+                    topPadding = 20.dp,
+                    bottomPadding = 20.dp
+                )
+                TopHeadlinesItems(
+                    viewState, modifier = Modifier
+                        .height(140.dp)
+                        .fillMaxWidth(), feedViewModel, sharedViewModel
+                )
+            }
+
+            item {
+                CategoryTitle("Sources", topPadding = 20.dp, bottomPadding = 20.dp)
+                SourcesItems(viewState, sharedViewModel, feedViewModel)
+            }
+
+            item {
+                CategoryTitle("Everything", topPadding = 20.dp, bottomPadding = 20.dp)
+                Categories(categories = feedViewModel.categoriesState.value,
+                    selectedCategory = feedViewModel.selectedCategory.value,
+                    onSelectCategory = { category ->
+                        feedViewModel.setCategory(category)
+                        feedViewModel.onTriggerEvent(FeedEvent.LoadArticles)
+                    })
+                Spacer(modifier = Modifier.height(20.dp))
+            }
+
+            when (articles.loadState.refresh) {
+                is LoadState.Loading -> {
+                    items(20) {
+                        ShimmerItem()
+                    }
+                }
+                else -> {
+                    items(articles.itemCount) {
+                        articles[it]?.let { article ->
+                            ArticleRow(articleDto = article, onDetailClick = {
+                                sharedViewModel.addArticle(article)
+                                feedViewModel.onTriggerEvent(FeedEvent.NavigateToDetailsScreen)
+                            })
+                        }
+                    }
+                }
+            }
+
+
+        }
+    }
+    AnimatedVisibility(visible = showButton.value, enter = fadeIn(), exit = fadeOut()) {
+        GoUp {
+            scope.launch {
+                scrollState.scrollToItem(0)
+            }
+        }
+    }
+}
+

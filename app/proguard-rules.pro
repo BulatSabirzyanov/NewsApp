@@ -1,0 +1,3 @@
+-keep class com.example.model.dto.** { *; }
+-keep class com.example.model.local.** { *; }
+-keep class com.example.model.remote.** { *; }
