@@ -1,26 +1,66 @@
 name: CI
 
 on:
-  push:
-    branches:
-      - main
   pull_request:
     branches:
-      - main
+      - master
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout Repository
+        uses: actions/checkout@v2
 
-      - name: Set up Android SDK
-        uses: android/setup-android@v2
+      - name: Set up JDK
+        uses: actions/setup-java@v2
         with:
-          target-api: 32
+          distribution: 'adopt'
+          java-version: '11'
 
-      - name: Detekt
-        run: ./gradlew detekt
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
 
-      - name: Unit Test
-        run: ./gradlew test
+      - name: Build and Test
+        run: |
+          ./gradlew build
+
+  detekt:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Set up JDK
+        uses: actions/setup-java@v2
+        with:
+          distribution: 'adopt'
+          java-version: '11'
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
+      - name: Install Detekt
+        run: |
+          ./gradlew detekt --quiet
+
+  unit-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Set up JDK
+        uses: actions/setup-java@v2
+        with:
+          distribution: 'adopt'
+          java-version: '11'
+
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
+      - name: Run Unit Tests
+        run: |
+          ./gradlew test
